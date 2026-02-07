@@ -2,42 +2,86 @@ package org.example.singleton_0602_rpg;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 public class HelloController {
-    @FXML
-    public Label label1;
-    @FXML
-    public Label label2;
-    @FXML
-    public Label label3;
-    @FXML
-    public Label label4;
-
-    Jogadores godfrey = new Jogadores("Godfrey","Necromante", 5,50,120,14, Mesa.getInstanciaDaMesa("mesa 1"));
-    Jogadores godefroy = new Jogadores("Godefroy","Exilado", 10,100,30,16, Mesa.getInstanciaDaMesa("mesa 2"));
-    Jogadores godwyn = new Jogadores("Godwyn","Clérigo", 25,200,80,20, Mesa.getInstanciaDaMesa("mesa 3"));
-    Jogadores morgot = new Jogadores("Morgot","Hemomante", 50,666,67,25, Mesa.getInstanciaDaMesa("mesa 4"));
 
     @FXML
-    public void initialize (){
-        updateText();
+    private Label lblDia;
+
+    @FXML
+    private Label lblFase;
+
+    @FXML
+    private Label lblDetalhe;
+
+    @FXML
+    private Label lblEmojiGigante;
+
+    @FXML
+    private Label lblPercentual;
+
+    @FXML
+    private DatePicker seletorData;
+
+    @FXML
+    private ProgressBar barraIluminacao;
+
+    private final CalculadoraLunar calculadora;
+    private final Lua lua;
+    private static final DateTimeFormatter FORMATADOR = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+    public HelloController() {
+        this.calculadora = new CalculadoraLunar();
+        this.lua = Lua.getInstancia();
     }
 
-    public void updateText() {
-        label1.setText(godfrey.descricao());
-        label2.setText(godefroy.descricao());
-        label3.setText(godwyn.descricao());
-        label4.setText(morgot.descricao());
+    @FXML
+    public void initialize() {
+        seletorData.setValue(lua.getDataSelecionada());
+        atualizarTela();
     }
 
     @FXML
-    public void btnCallBack(ActionEvent event) {
+    private void aoSelecionarData(ActionEvent evento) {
+        LocalDate dataSelecionada = seletorData.getValue();
+        if (dataSelecionada != null) {
+            lua.setDataSelecionada(dataSelecionada);
+            atualizarTela();
+        }
+    }
 
-        godfrey.setNivel(godfrey.getNivel()+1);
-        godefroy.setNivel(godefroy.getNivel()+1);
-        godwyn.setNivel(godwyn.getNivel()+1);
-        morgot.setNivel(morgot.getNivel()+1);
-        updateText();
+    @FXML
+    private void aoDiaSeguinte(ActionEvent evento) {
+        calculadora.avancarDia();
+        seletorData.setValue(lua.getDataSelecionada());
+        atualizarTela();
+    }
+
+    @FXML
+    private void aoDiaAnterior(ActionEvent evento) {
+        calculadora.retrocederDia();
+        seletorData.setValue(lua.getDataSelecionada());
+        atualizarTela();
+    }
+
+    private void atualizarTela() {
+        // Atualiza textos
+        lblDia.setText(String.format("Data: %s | Dia do ciclo: %d/29",
+                lua.getDataSelecionada().format(FORMATADOR),
+                lua.getDiaDoCiclo()));
+
+        lblFase.setText(lua.getFaseAtual().getNome());
+        lblDetalhe.setText(lua.getDetalheFase());
+        lblEmojiGigante.setText(lua.getFaseAtual().getEmoji());
+
+        // Atualiza barra de iluminação
+        double percentual = lua.getPercentualIluminacao();
+        barraIluminacao.setProgress(percentual / 100.0);
+        lblPercentual.setText(String.format("%.0f%%", percentual));
     }
 }
